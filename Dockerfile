@@ -41,6 +41,11 @@ RUN pip install -r /tmp/requirements.txt
 # ---------------------------------------------------------------------------
 FROM ubuntu:24.04
 
+# Liga el paquete GHCR al repositorio (las Actions del repo obtienen acceso de escritura)
+LABEL org.opencontainers.image.source="https://github.com/Consultores-Odoo-Colombia/siteco_odoo20ce_devel" \
+      org.opencontainers.image.description="Odoo 20.0 Community Edition (LGPL-3) - SITECO" \
+      org.opencontainers.image.licenses="LGPL-3.0-only"
+
 ARG TARGETARCH
 ARG WKHTMLTOX_VERSION=0.12.6.1-3
 # sha256 de wkhtmltox_${WKHTMLTOX_VERSION}.jammy_<arch>.deb (github.com/wkhtmltopdf/packaging)

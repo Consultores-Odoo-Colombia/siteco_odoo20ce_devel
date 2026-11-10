@@ -1,7 +1,7 @@
 # =============================================================================
 # Odoo 20 CE — despliegue en COOLIFY (recurso "Docker Compose")
 # =============================================================================
-# Imagen: ghcr.io/consultores-odoo-colombia/siteco_odoo20ce_devel:<tag>
+# Imagen: ghcr.io/consultores-odoo-colombia/odoo20-ce:<tag>
 # (la publica .github/workflows/docker-publish.yml en cada push a 20.0-coolify).
 #
 # Coolify genera SERVICE_USER_* / SERVICE_PASSWORD_*. Crear a mano en
@@ -20,7 +20,7 @@
 
 services:
   odoo:
-    image: ghcr.io/consultores-odoo-colombia/siteco_odoo20ce_devel:${ODOO_IMAGE_TAG:-20.0}
+    image: ghcr.io/consultores-odoo-colombia/odoo20-ce:${ODOO_IMAGE_TAG:-20.0}
     restart: unless-stopped
     depends_on:
       db:
