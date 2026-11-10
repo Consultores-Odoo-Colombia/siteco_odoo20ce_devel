@@ -34,3 +34,6 @@ Thumbs.db
 # Herramientas locales
 /.claude/
 /graphify-out/
+
+# Datos locales de Odoo (data_dir)
+/.odoo-data/

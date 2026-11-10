@@ -1,6 +1,6 @@
 name: Publicar imagen Docker
 
-# Publica en GitHub Container Registry (ghcr.io/<org>/<repo>).
+# Publica en GitHub Container Registry (ghcr.io/consultores-odoo-colombia/odoo20-ce, paquete publico).
 # El paquete hereda la visibilidad que se le configure en GitHub Packages.
 on:
   push:
@@ -33,7 +33,7 @@ jobs:
       - id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}
+          images: ghcr.io/consultores-odoo-colombia/odoo20-ce
           tags: |
             type=raw,value=20.0,enable=${{ github.ref == 'refs/heads/20.0-coolify' }}
             type=ref,event=tag
