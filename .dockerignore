@@ -1,0 +1,9 @@
+# Lista blanca: al contexto de build solo entra lo que la imagen necesita
+*
+!odoo
+!docker
+!requirements.txt
+!LICENSE
+
+**/__pycache__
+**/*.py[co]

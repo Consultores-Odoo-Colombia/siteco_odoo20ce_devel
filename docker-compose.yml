@@ -1,0 +1,45 @@
+# Entorno local / referencia de despliegue. Copiar .env.example a .env antes de usar.
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: ${PGUSER:-odoo}
+      POSTGRES_PASSWORD: ${PGPASSWORD:?definir PGPASSWORD en .env}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PGUSER:-odoo} -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  odoo:
+    image: ${ODOO_IMAGE:-siteco/odoo:20.0}
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGPORT: 5432
+      PGUSER: ${PGUSER:-odoo}
+      PGPASSWORD: ${PGPASSWORD}
+      ODOO_ADMIN_PASSWD: ${ODOO_ADMIN_PASSWD:?definir ODOO_ADMIN_PASSWD en .env}
+      ODOO_PROXY_MODE: ${ODOO_PROXY_MODE:-false}
+      ODOO_LIST_DB: ${ODOO_LIST_DB:-true}
+      ODOO_DBFILTER: ${ODOO_DBFILTER:-}
+      ODOO_WORKERS: ${ODOO_WORKERS:-0}
+      ODOO_MAX_CRON_THREADS: ${ODOO_MAX_CRON_THREADS:-1}
+    ports:
+      - "${ODOO_HTTP_PORT:-8069}:8069"
+      - "${ODOO_GEVENT_PORT:-8072}:8072"
+    volumes:
+      - odoo-data:/var/lib/odoo
+      - ./custom-addons:/mnt/extra-addons:ro
+
+volumes:
+  db-data:
+  odoo-data:

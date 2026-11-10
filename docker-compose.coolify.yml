@@ -1,0 +1,107 @@
+# =============================================================================
+# Odoo 20 CE — despliegue en COOLIFY (recurso "Docker Compose")
+# =============================================================================
+# Imagen: ghcr.io/consultores-odoo-colombia/siteco_odoo20ce_devel:<tag>
+# (la publica .github/workflows/docker-publish.yml en cada push a 20.0-coolify).
+#
+# Coolify genera SERVICE_USER_* / SERVICE_PASSWORD_*. Crear a mano en
+# "Environment Variables":
+#   DOMAIN          dominio del servicio, sin https:// (obligatorio)
+#   ODOO_IMAGE_TAG  etiqueta publicada en GHCR (por defecto 20.0)
+#   ODOO_WORKERS    ~1 por cada 6 usuarios simultáneos, máx. (núcleos x 2) + 1
+#
+# La configuración va solo por variables ODOO_* / PG*: la imagen no trae odoo.conf.
+# PGDATABASE=odoo + POSTGRES_DB=postgres: en el primer arranque la base "odoo"
+# no existe y Odoo la crea e inicializa con "base" (sin esto queda una base
+# vacía y aparecen los "relation ir_module_module does not exist").
+# /mnt/extra-addons es el volumen donde modulos-hub copia los módulos.
+# NO poner "Domain" en la UI de Coolify: duplicaría los labels de Traefik.
+# =============================================================================
+
+services:
+  odoo:
+    image: ghcr.io/consultores-odoo-colombia/siteco_odoo20ce_devel:${ODOO_IMAGE_TAG:-20.0}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - PGHOST=db
+      - PGPORT=5432
+      - PGUSER=$SERVICE_USER_POSTGRES
+      - PGPASSWORD=$SERVICE_PASSWORD_POSTGRES
+      - PGDATABASE=${PGDATABASE:-odoo}
+      - ODOO_ADMIN_PASSWD=$SERVICE_PASSWORD_ADMIN
+      - ODOO_DBFILTER=${ODOO_DBFILTER:-^odoo$$}
+      - ODOO_LIST_DB=${ODOO_LIST_DB:-False}
+      - ODOO_PROXY_MODE=True
+      - ODOO_ADDONS_PATH=/mnt/extra-addons
+      - ODOO_WORKERS=${ODOO_WORKERS:-4}
+      - ODOO_MAX_CRON_THREADS=${ODOO_MAX_CRON_THREADS:-2}
+      - ODOO_GEVENT_PORT=8072
+      - ODOO_LIMIT_TIME_CPU=600
+      - ODOO_LIMIT_TIME_REAL=1200
+      - ODOO_LIMIT_MEMORY_SOFT=2147483648
+      - ODOO_LIMIT_MEMORY_HARD=2684354560
+    volumes:
+      - odoo-data:/var/lib/odoo
+      - odoo-modules:/mnt/extra-addons
+    healthcheck:
+      test: ['CMD', 'curl', '-fs', 'http://127.0.0.1:8069/web/health']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 300s
+    networks:
+      - default
+      - coolify
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=coolify
+
+      - 'traefik.http.routers.odoo20-http.rule=Host(`${DOMAIN}`)'
+      - traefik.http.routers.odoo20-http.entrypoints=http
+      - traefik.http.routers.odoo20-http.service=odoo20
+      - traefik.http.routers.odoo20-http.middlewares=odoo20-https-redirect
+      - traefik.http.middlewares.odoo20-https-redirect.redirectscheme.scheme=https
+
+      - 'traefik.http.routers.odoo20.rule=Host(`${DOMAIN}`)'
+      - traefik.http.routers.odoo20.entrypoints=https
+      - traefik.http.routers.odoo20.tls=true
+      - traefik.http.routers.odoo20.tls.certresolver=letsencrypt
+      - traefik.http.routers.odoo20.service=odoo20
+      - traefik.http.services.odoo20.loadbalancer.server.port=8069
+
+      - 'traefik.http.routers.odoo20-ws.rule=Host(`${DOMAIN}`) && PathPrefix(`/websocket`)'
+      - traefik.http.routers.odoo20-ws.entrypoints=https
+      - traefik.http.routers.odoo20-ws.tls=true
+      - traefik.http.routers.odoo20-ws.tls.certresolver=letsencrypt
+      - traefik.http.routers.odoo20-ws.priority=100
+      - traefik.http.routers.odoo20-ws.service=odoo20-ws
+      - traefik.http.services.odoo20-ws.loadbalancer.server.port=8072
+
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    command: ['postgres', '-c', 'shared_buffers=${PG_SHARED_BUFFERS:-512MB}']
+    shm_size: 256m
+    environment:
+      - POSTGRES_USER=$SERVICE_USER_POSTGRES
+      - POSTGRES_PASSWORD=$SERVICE_PASSWORD_POSTGRES
+      - POSTGRES_DB=postgres
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+networks:
+  coolify:
+    external: true
+
+volumes:
+  odoo-data:
+  odoo-modules:
+  db-data:
