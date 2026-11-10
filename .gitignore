@@ -1,0 +1,36 @@
+# Los patrones van anclados a la raiz (/) a proposito: el codigo de Odoo
+# contiene carpetas dist/, archivos .sql, .zip y .pem que SI deben versionarse.
+
+# Secretos y configuracion local
+/.env
+/.env.*
+!/.env.example
+/odoo.conf
+
+# Datos de ejecucion y respaldos
+/filestore/
+/sessions/
+/backups/
+/*.dump
+/*.sql
+/*.sql.gz
+/*.zip
+
+# Python
+__pycache__/
+*.py[co]
+/odoo.egg-info/
+/build/
+/dist/
+/.venv/
+/venv/
+
+# Editores / SO
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Herramientas locales
+/.claude/
+/graphify-out/

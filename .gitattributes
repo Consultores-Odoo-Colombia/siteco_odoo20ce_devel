@@ -1,0 +1,27 @@
+# El codigo se ejecuta en Linux: fuerza LF aunque se clone en Windows
+# (un CRLF en entrypoint.sh rompe el arranque del contenedor)
+* text=auto eol=lf
+*.sh text eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.otf binary
+*.mo binary
+*.zip binary
+*.gz binary
+*.xls binary
+*.xlsx binary
+*.ods binary
+*.odt binary
+*.mp3 binary
+*.mp4 binary
+*.webm binary
+*.wasm binary
