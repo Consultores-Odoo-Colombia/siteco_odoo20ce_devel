@@ -35,7 +35,7 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            type=raw,value=20.0
+            type=raw,value=20.0,enable=${{ github.ref == 'refs/heads/20.0-coolify' }}
             type=ref,event=tag
             type=sha,format=short,prefix=20.0-
 
