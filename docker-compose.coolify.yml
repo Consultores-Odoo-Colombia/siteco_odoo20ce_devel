@@ -1,26 +1,30 @@
 # =============================================================================
 # Odoo 20 CE — despliegue en COOLIFY (recurso "Docker Compose")
 # =============================================================================
-# Imagen: ghcr.io/consultores-odoo-colombia/odoo20-ce:<tag>
-# (la publica .github/workflows/docker-publish.yml en cada push a 20.0-coolify).
+# Imagen: ghcr.io/consultores-odoo-colombia/siteco-odoo20ce:<tag>
+# (la publica .github/workflows/docker-publish.yml: 20.0 en cada push a
+# 20.0-coolify; X.Y.Z y X.Y con cada tag git vX.Y.Z).
 #
 # Coolify genera SERVICE_USER_* / SERVICE_PASSWORD_*. Crear a mano en
 # "Environment Variables":
 #   DOMAIN          dominio del servicio, sin https:// (obligatorio)
-#   ODOO_IMAGE_TAG  etiqueta publicada en GHCR (por defecto 20.0)
+#   ODOO_IMAGE_TAG  etiqueta publicada en GHCR (por defecto 1.1; 20.0 = última de la rama)
 #   ODOO_WORKERS    ~1 por cada 6 usuarios simultáneos, máx. (núcleos x 2) + 1
 #
 # La configuración va solo por variables ODOO_* / PG*: la imagen no trae odoo.conf.
-# PGDATABASE=odoo + POSTGRES_DB=postgres: en el primer arranque la base "odoo"
-# no existe y Odoo la crea e inicializa con "base" (sin esto queda una base
-# vacía y aparecen los "relation ir_module_module does not exist").
+# PGDATABASE=odoo + POSTGRES_DB=postgres: en el primer arranque el entrypoint
+# de la imagen ve que falta ir_module_module y ejecuta una vez `-i base`
+# (Odoo no lo hace solo). Opcionales: ODOO_INIT_LANG=es_CO (idioma inicial),
+# ODOO_SKIP_INIT=1 (restauraciones/copias: no inicializar).
+# El usuario "admin" queda con ODOO_INIT_ADMIN_PASSWORD o, si no se define,
+# con la misma contraseña maestra (ODOO_ADMIN_PASSWD); nunca admin/admin.
 # /mnt/extra-addons es el volumen donde modulos-hub copia los módulos.
 # NO poner "Domain" en la UI de Coolify: duplicaría los labels de Traefik.
 # =============================================================================
 
 services:
   odoo:
-    image: ghcr.io/consultores-odoo-colombia/odoo20-ce:${ODOO_IMAGE_TAG:-20.0}
+    image: ghcr.io/consultores-odoo-colombia/siteco-odoo20ce:${ODOO_IMAGE_TAG:-1.1}
     restart: unless-stopped
     depends_on:
       db:
@@ -32,6 +36,8 @@ services:
       - PGPASSWORD=$SERVICE_PASSWORD_POSTGRES
       - PGDATABASE=${PGDATABASE:-odoo}
       - ODOO_ADMIN_PASSWD=$SERVICE_PASSWORD_ADMIN
+      - ODOO_INIT_LANG=${ODOO_INIT_LANG:-}
+      - ODOO_SKIP_INIT=${ODOO_SKIP_INIT:-0}
       - ODOO_DBFILTER=${ODOO_DBFILTER:-^odoo$$}
       - ODOO_LIST_DB=${ODOO_LIST_DB:-False}
       - ODOO_PROXY_MODE=True

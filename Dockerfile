@@ -74,6 +74,7 @@ RUN apt-get update \
         postgresql-client \
         fonts-dejavu-core \
         fonts-liberation \
+        unzip \
     && curl -fsSL -o /tmp/wkhtmltox.deb \
         "https://github.com/wkhtmltopdf/packaging/releases/download/${WKHTMLTOX_VERSION}/wkhtmltox_${WKHTMLTOX_VERSION}.jammy_${TARGETARCH}.deb" \
     && case "${TARGETARCH}" in \
@@ -98,9 +99,9 @@ COPY LICENSE /opt/odoo/LICENSE
 COPY odoo /opt/odoo/odoo
 
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod 0755 /usr/local/bin/entrypoint.sh \
-    && printf '#!/bin/sh\nexec python3 -m odoo "$@"\n' > /usr/local/bin/odoo \
-    && chmod 0755 /usr/local/bin/odoo
+# Lanzador real del repo: con `python3 -m odoo` el worker gevent (sys.argv[0]) no arranca
+COPY setup/odoo /usr/local/bin/odoo
+RUN chmod 0755 /usr/local/bin/entrypoint.sh /usr/local/bin/odoo
 
 # Valores por defecto; se sobreescriben en tiempo de ejecucion
 ENV ODOO_DATA_DIR=/var/lib/odoo \
