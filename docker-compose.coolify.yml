@@ -16,6 +16,8 @@
 # de la imagen ve que falta ir_module_module y ejecuta una vez `-i base`
 # (Odoo no lo hace solo). Opcionales: ODOO_INIT_LANG=es_CO (idioma inicial),
 # ODOO_SKIP_INIT=1 (restauraciones/copias: no inicializar).
+# El usuario "admin" queda con ODOO_INIT_ADMIN_PASSWORD o, si no se define,
+# con la misma contraseña maestra (ODOO_ADMIN_PASSWD); nunca admin/admin.
 # /mnt/extra-addons es el volumen donde modulos-hub copia los módulos.
 # NO poner "Domain" en la UI de Coolify: duplicaría los labels de Traefik.
 # =============================================================================

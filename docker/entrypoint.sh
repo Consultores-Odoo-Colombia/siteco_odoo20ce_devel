@@ -32,12 +32,32 @@ if [ "$1" = "odoo" ] && [ $# -eq 1 ] && [ "${ODOO_SKIP_INIT:-0}" != "1" ]; then
         esac
     fi
     if [ "$ready" != "t" ]; then
+        # -i base deja admin/admin: sin contraseña para admin no se inicializa
+        INIT_ADMIN_PW="${ODOO_INIT_ADMIN_PASSWORD:-${ODOO_ADMIN_PASSWD:-}}"
+        if [ -z "$INIT_ADMIN_PW" ]; then
+            echo "entrypoint: define ODOO_INIT_ADMIN_PASSWORD u ODOO_ADMIN_PASSWD para inicializar $DB" >&2
+            exit 1
+        fi
         echo "entrypoint: inicializando la base $DB (-i base)"
         odoo -d "$DB" -i base --stop-after-init --workers=0 --max-cron-threads=0 \
             ${ODOO_INIT_LANG:+--load-language="$ODOO_INIT_LANG"} || {
             echo "entrypoint: falló la inicialización de la base $DB" >&2
             exit 1
         }
+        # La contraseña va por entorno, nunca interpolada en el código Python
+        out=$(echo "import os; u = env.ref('base.user_admin'); u.password = os.environ['INIT_ADMIN_PW']; env.cr.commit(); print('ADMIN_PW_OK')" \
+            | INIT_ADMIN_PW="$INIT_ADMIN_PW" odoo shell -d "$DB" --workers=0 --max-cron-threads=0 2>&1) || true
+        unset INIT_ADMIN_PW
+        case "$out" in
+            *ADMIN_PW_OK*) echo "entrypoint: contraseña de admin fijada en $DB" ;;
+            *)
+                echo "$out" >&2
+                # Base recién inicializada por este script: se borra para no dejar admin/admin
+                echo "entrypoint: no se pudo fijar la contraseña de admin; se borra $DB" >&2
+                dropdb --if-exists "$DB" || true
+                exit 1
+                ;;
+        esac
     fi
 fi
 
