@@ -2,6 +2,7 @@
 *
 !odoo
 !docker
+!setup/odoo
 !requirements.txt
 !LICENSE
 

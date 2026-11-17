@@ -16,7 +16,7 @@ services:
       retries: 10
 
   odoo:
-    image: ${ODOO_IMAGE:-siteco/odoo:20.0}
+    image: ${ODOO_IMAGE:-siteco-odoo20ce:1.1}
     build: .
     restart: unless-stopped
     depends_on:
